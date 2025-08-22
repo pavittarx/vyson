@@ -9,6 +9,19 @@ const generateCode = (num: number) => {
   return hex.match(/.{1,3}/g)?.join("-") || hex;
 };
 
+const generateRandomUrls = (count: number) => {
+  const urls = [];
+
+  for (let i = 0; i < count; i++) {
+    const randomUrl = `https://example.com/${Math.random()
+      .toString(36)
+      .substring(2, 15)}`;
+    urls.push(randomUrl);
+  }
+
+  return urls;
+};
+
 const TABLE_NAME = "url_shortner";
 
 async function getClientAndDatabase() {
@@ -52,11 +65,22 @@ async function main() {
 
     // Insert from sample_urls.json
     for (const url of sampleUrls) {
-      db.insertIntoDatabase(url, generateCode(index));
+      await db.insertIntoDatabase(url, generateCode(index));
+      index++;
+    }
+
+    const randomUrls = generateRandomUrls(1000);
+
+    for (const url of randomUrls) {
+      await db.insertIntoDatabase(url, generateCode(index));
       index++;
     }
   } catch (error: any) {
-    console.error("Error creating table:", error.message);
+    console.error("Error:", error.message);
+  } finally {
+    if (client) {
+      await client.end();
+    }
   }
 }
 

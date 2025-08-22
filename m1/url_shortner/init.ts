@@ -17,6 +17,7 @@ export const getClient = async () => {
   const admin = await connect({
     ...connectionConfig,
     database: "postgres",
+    keepAlive: false,
   });
 
   const rows = await admin.query(
