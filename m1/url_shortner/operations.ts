@@ -1,5 +1,10 @@
 import type { Client } from "ts-postgres";
 
+type BatchInput = {
+  url: string;
+  code: string;
+}[];
+
 export class DatabaseManager {
   constructor(private readonly client: Client) {}
 
@@ -29,5 +34,21 @@ export class DatabaseManager {
       console.log(row);
       console.log(`Inserted URL: ${url} with code: ${code}`);
     }
+  }
+
+  async insertBatch(data: BatchInput) {
+    const queryPlaceholder = data
+      .map((_, index) => `($${index * 2 + 1}, $${index * 2 + 2})`)
+      .join(", ");
+
+    const values = data.flatMap((item) => [item.url, item.code]);
+
+    const insert_query = `
+      INSERT INTO url_shortner (original_url, code)
+      VALUES ${queryPlaceholder}
+      ON CONFLICT (code) DO NOTHING;
+    `;
+
+    await this.client.query(insert_query, values);
   }
 }
