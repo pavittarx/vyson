@@ -1,6 +1,7 @@
 import { getClient } from "./init";
 import sampleUrls from "./sample_urls.json";
 import { DatabaseManager } from "./operations";
+import type { Client } from "ts-postgres";
 
 const generateCode = (num: number) => {
   const hex = num.toString(16).padStart(3, "X").padStart(6, "Y").toUpperCase();
@@ -39,6 +40,42 @@ async function getClientAndDatabase() {
   };
 }
 
+async function currentCount(client: Client, db: DatabaseManager) {
+  const count_query = `SELECT count(*)::int FROM url_shortner;`;
+  const count_result = await client.query(count_query);
+
+  for await (const row of count_result) {
+    console.log(`Total records in ${TABLE_NAME}:`, row.count);
+    return row.count;
+  }
+}
+
+async function inserts(
+  index: number,
+  db: DatabaseManager,
+  batchSize: number = 1000
+) {
+  const urlCount = 10000000; // 10M rows
+  const randomUrls = generateUrlWithHashCode(urlCount, index);
+
+  const startTime = performance.now();
+
+  for (let i = 0; i < randomUrls.length; i += 1000) {
+    const batch = randomUrls.slice(i, i + 1000);
+    await db.insertBatch(batch);
+
+    console.log("Inserted batch of URLs:", i + 1000);
+  }
+
+  const endTime = performance.now();
+
+  console.log(
+    `Total Time taken to insert ${urlCount} URLs:`,
+    endTime - startTime,
+    "ms"
+  );
+}
+
 async function main() {
   const { client, db } = await getClientAndDatabase();
 
@@ -58,35 +95,8 @@ async function main() {
       console.log(`Total records in ${TABLE_NAME}:`, row);
     }
 
-    const count_query = `SELECT count(*)::int FROM url_shortner;`;
-    const count_result = await client.query(count_query);
-
-    let index = 0;
-
-    for await (const row of count_result) {
-      console.log(`Total records in ${TABLE_NAME}:`, row.count);
-      index = row.count + 1;
-    }
-
-    const urlCount = 1000000;
-    const randomUrls = generateUrlWithHashCode(urlCount, index);
-
-    const startTime = performance.now();
-
-    for (let i = 0; i < randomUrls.length; i += 1000) {
-      const batch = randomUrls.slice(i, i + 1000);
-      await db.insertBatch(batch);
-
-      console.log("Inserted batch of URLs:", i + 1000);
-    }
-
-    const endTime = performance.now();
-
-    console.log(
-      `Total Time taken to insert ${urlCount} URLs:`,
-      endTime - startTime,
-      "ms"
-    );
+    const count = await currentCount(client, db);
+    await inserts(count, db, 5000);
   } catch (error: any) {
     console.error("Error:", error.message);
   } finally {
