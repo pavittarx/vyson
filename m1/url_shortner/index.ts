@@ -4,7 +4,7 @@ import { DatabaseManager } from "./operations";
 import type { Client } from "ts-postgres";
 
 const generateCode = (num: number) => {
-  const hex = num.toString(16).padStart(3, "X").padStart(6, "Y").toUpperCase();
+  const hex = num.toString(16).padStart(4, "X").padStart(8, "Y").toUpperCase();
 
   // Splits hex at interval of 3 and adds hyphen
   return hex.match(/.{1,3}/g)?.join("-") || hex;
@@ -50,32 +50,6 @@ async function currentCount(client: Client, db: DatabaseManager) {
   }
 }
 
-async function inserts(
-  index: number,
-  db: DatabaseManager,
-  batchSize: number = 1000
-) {
-  const urlCount = 10000000; // 10M rows
-  const randomUrls = generateUrlWithHashCode(urlCount, index);
-
-  const startTime = performance.now();
-
-  for (let i = 0; i < randomUrls.length; i += 1000) {
-    const batch = randomUrls.slice(i, i + 1000);
-    await db.insertBatch(batch);
-
-    console.log("Inserted batch of URLs:", i + 1000);
-  }
-
-  const endTime = performance.now();
-
-  console.log(
-    `Total Time taken to insert ${urlCount} URLs:`,
-    endTime - startTime,
-    "ms"
-  );
-}
-
 async function main() {
   const { client, db } = await getClientAndDatabase();
 
@@ -95,8 +69,30 @@ async function main() {
       console.log(`Total records in ${TABLE_NAME}:`, row);
     }
 
-    const count = await currentCount(client, db);
-    await inserts(count, db, 5000);
+    let count = await currentCount(client, db);
+    count++;
+
+    const urlCount = 100000000; // 100M rows
+    const startTime = performance.now();
+
+    const batchSize = 15000;
+
+    for (let i = 0; i < urlCount; i += 1000000) {
+      for (let j = 0; j < 1000000; j += batchSize) {
+        const batch = generateUrlWithHashCode(batchSize, count + i + j);
+        await db.insertBatch(batch);
+
+        console.log("Inserted batch of URLs:", i + j + batchSize);
+      }
+    }
+
+    const endTime = performance.now();
+
+    console.log(
+      `Total Time taken to insert ${urlCount} URLs:`,
+      endTime - startTime,
+      "ms"
+    );
   } catch (error: any) {
     console.error("Error:", error.message);
   } finally {
