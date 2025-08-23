@@ -69,12 +69,22 @@ async function main() {
       index++;
     }
 
-    const randomUrls = generateRandomUrls(1000);
+    const urlCount = 1000000;
+    const randomUrls = generateRandomUrls(urlCount);
 
+    const startTime = performance.now();
     for (const url of randomUrls) {
       await db.insertIntoDatabase(url, generateCode(index));
       index++;
     }
+
+    const endTime = performance.now();
+
+    console.log(
+      `Total Time taken to insert ${urlCount} URLs:`,
+      endTime - startTime,
+      "ms"
+    );
   } catch (error: any) {
     console.error("Error:", error.message);
   } finally {
