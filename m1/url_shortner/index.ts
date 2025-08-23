@@ -9,17 +9,22 @@ const generateCode = (num: number) => {
   return hex.match(/.{1,3}/g)?.join("-") || hex;
 };
 
-const generateRandomUrls = (count: number) => {
-  const urls = [];
+const generateUrlWithHashCode = (count: number, codeIndex: number) => {
+  const urlsWithHash = [];
 
-  for (let i = 0; i < count; i++) {
-    const randomUrl = `https://example.com/${Math.random()
+  for (let i = codeIndex; i < codeIndex + count; i++) {
+    const code = generateCode(i);
+    const url = `https://example.com/${Math.random()
       .toString(36)
       .substring(2, 15)}`;
-    urls.push(randomUrl);
+
+    urlsWithHash.push({
+      url: url,
+      code: code,
+    });
   }
 
-  return urls;
+  return urlsWithHash;
 };
 
 const TABLE_NAME = "url_shortner";
@@ -63,19 +68,16 @@ async function main() {
       index = row.count + 1;
     }
 
-    // Insert from sample_urls.json
-    for (const url of sampleUrls) {
-      await db.insertIntoDatabase(url, generateCode(index));
-      index++;
-    }
-
     const urlCount = 1000000;
-    const randomUrls = generateRandomUrls(urlCount);
+    const randomUrls = generateUrlWithHashCode(urlCount, index);
 
     const startTime = performance.now();
-    for (const url of randomUrls) {
-      await db.insertIntoDatabase(url, generateCode(index));
-      index++;
+
+    for (let i = 0; i < randomUrls.length; i += 1000) {
+      const batch = randomUrls.slice(i, i + 1000);
+      await db.insertBatch(batch);
+
+      console.log("Inserted batch of URLs:", i + 1000);
     }
 
     const endTime = performance.now();
