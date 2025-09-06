@@ -1,5 +1,4 @@
 import { getClient } from "./init";
-import sampleUrls from "./sample_urls.json";
 import { DatabaseManager } from "./operations";
 import type { Client } from "ts-postgres";
 
