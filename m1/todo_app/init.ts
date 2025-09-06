@@ -45,7 +45,7 @@ async function setupTables(client: Client) {
   console.log(`Setting up Tables for Database ${database}`);
   console.log(`Table: Users`);
 
-  const users_table = await client.query(
+  await client.query(
     `
       CREATE TABLE IF NOT EXISTS users(
         id SERIAL PRIMARY KEY,
@@ -58,14 +58,18 @@ async function setupTables(client: Client) {
 
   console.log("Ready: Users table.");
 
-  const todos_table = await client.query(
+  await client.query(
     `
       CREATE TABLE IF NOT EXISTS todos(
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
+        description TEXT,
         userId INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        isCompleted BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        status VARCHAR(20) DEFAULT 'pending',
+        dueDate TIMESTAMP,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        CONSTRAINT chk_status CHECK (status IN ('pending', 'in_progress', 'completed'))
       );
     `
   );
