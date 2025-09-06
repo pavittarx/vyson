@@ -6,8 +6,11 @@
     "dev": "tsx index.ts"
   },
   "devDependencies": {
-    "@types/node": "^20.14.12",
+    "@types/node": "^20.19.11",
     "tsx": "^4.16.2",
     "typescript": "^5.5.4"
+  },
+  "dependencies": {
+    "ts-postgres": "^2.0.4"
   }
 }

@@ -11,11 +11,15 @@ importers:
       ts-postgres:
         specifier: ^2.0.4
         version: 2.0.4(@types/node@20.19.11)
+    devDependencies:
+      '@types/node':
+        specifier: ^20.19.11
+        version: 20.19.11
       tsx:
-        specifier: ^4.20.5
+        specifier: ^4.16.2
         version: 4.20.5
       typescript:
-        specifier: ^5.9.2
+        specifier: ^5.5.4
         version: 5.9.2
 
 packages:

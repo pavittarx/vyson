@@ -1,3 +1,4 @@
+import { generateTodos, generateUsers } from "./generator.js";
 import { getClient } from "./init.js";
 
 await using client = await getClient();
@@ -35,43 +36,13 @@ const createTodo = async ({ title, userId }: { title: string, userId: number }) 
 };
 
 async function main(){
-  const users = [{
-    name: 'Rick',
-    email: "rick@mail.com"
-  }, {
-    name: 'Walter',
-    email: 'walter@mail.com'
-  },
-  {
-    name: 'John',
-    email: 'john@mail.com'
-  }, {
-    name: 'Jane',
-    email: 'jane@mail.com'
-  }, {
-    name: 'David',
-    email: 'david@mail.com'
-  }]
+  const users = generateUsers(10);
 
-  for (const user of users) {
-    await createUser(user);
-  }
+  console.log(users);
 
-  const todos = [
-    {title: 'Buy groceries', userId: 1},
-    {title: 'Walk the dog', userId: 8},
-    {title: 'Do laundry', userId: 4},
-    {title: 'Prepare dinner', userId: 3},
-    {title: 'Read a book', userId: 5},
-    {title: 'Go for a run', userId: 6},
-    {title: 'Clean the house', userId: 4},
-    {title: 'Do laundry', userId: 7},
-    {title: 'Prepare dinner', userId: 3},
-  ];
+  const todos = generateTodos(20, users.length);
 
-  for (const todo of todos) {
-    await createTodo(todo);
-  }
+  console.log(todos);
 }
 
 await main();
