@@ -1,6 +1,5 @@
 // AI Generated for most part,
 // Used to generate data for seeding the database and testing.
-
 import { randomBytes } from "node:crypto";
 
 const names = [
@@ -78,10 +77,10 @@ export function generateUsers(count: number) {
   return users;
 }
 
-export function generateTodos(count: number, maxUserId: number) {
+export function generateTodos(count: number, userIds: number[]) {
   const todos = [];
   for (let i = 0; i < count; i++) {
-    const userId = 1 + Math.floor(Math.random() * maxUserId);
+    const userId = userIds[Math.floor(Math.random() * userIds.length)];
     const created_at = randomDateInPastSixMonths();
     const due_date = randomDueDate(created_at);
     todos.push({

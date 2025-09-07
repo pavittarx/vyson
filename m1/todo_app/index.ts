@@ -1,48 +1,35 @@
 import { generateTodos, generateUsers } from "./generator.js";
 import { getClient } from "./init.js";
+import { DatabaseManager } from "./database.js";
 
 await using client = await getClient();
-
-async function createUser({name, email}: {name: string, email: string}) {
-  const exists = await client.query(
-    `
-      SELECT 1 FROM users WHERE email = $1;
-    `,
-    [email]
-  );
-
-  console.log("Exists", exists.rows);
-
-  if(exists.rows.length > 0) {
-    console.log("User already exists with email:", email);
-    return;
-  }
-
-  await client.query(
-    `
-      INSERT INTO users(name, email) VALUES($1, $2);
-    `,
-    [name, email]
-  );
-}
-
-const createTodo = async ({ title, userId }: { title: string, userId: number }) => {
-  await client.query(
-    `
-      INSERT INTO todos(title, userId) VALUES($1, $2);
-    `,
-    [title, userId]
-  );
-};
+const db = new DatabaseManager(client);
 
 async function main(){
-  const users = generateUsers(10);
+  const totalInserts = 100000000;
+  const stepSize = 500;
+  const start = performance.now();
 
-  console.log(users);
+  for(let i = 0; i < totalInserts; i+=stepSize){
+    const users = generateUsers(stepSize);
+    const result = await db.createUsersBulk(users);
 
-  const todos = generateTodos(20, users.length);
+    if(!result){
+      console.log("No new users were added in this batch, skipping todo creation.");
+      continue;
+    }
 
-  console.log(todos);
+    const userIds: number[] = [];
+    for(let row of result){
+      userIds.push(row.id);
+    }
+    const todos = generateTodos(stepSize*10, userIds);
+    await db.createTodosBulk(todos);
+
+    console.log(`Inserted ${(i + stepSize)} records so far...`);
+  }
+
+  console.log(`Total Time for ${totalInserts} insertions:`, performance.now() - start);
 }
 
 await main();
