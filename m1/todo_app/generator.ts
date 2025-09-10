@@ -93,8 +93,8 @@ export function generateTodos(count: number, userIds: number[]) {
       title: `Todo #${i + 1}`,
       userId: userId,
       status: status,
-      createdAt: createdAt,
-      dueDate: dueDate,
+      createdAt: createdAt.toISOString(),
+      dueDate: dueDate.toISOString(),
     });
   }
   return todos;

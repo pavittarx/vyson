@@ -1,5 +1,4 @@
-import { connect } from "ts-postgres";
-import type { Client } from "ts-postgres";
+import { Client } from "pg";
 
 // Ideally should be kept in an .env
 // since it is a sample project and uses local db, kept here for simplicity
@@ -15,26 +14,26 @@ const database = "todo_app";
 async function getCurrentCount(client: Client, table: string) {
   const count_query = `SELECT count(*)::int FROM ${table};`;
   const count_result = await client.query(count_query);
-
-  for await (const row of count_result) {
-    return row.count;
+  if (count_result.rows.length > 0) {
+    return count_result.rows[0].count;
   }
+  return 0;
 }
 
 async function setupDatabase() {
   console.log(`Setting up Database ${database}`);
 
-  const admin = await connect({
+  const admin = new Client({
     ...connectionConfig,
     database: "postgres",
-    keepAlive: false,
   });
+  await admin.connect();
 
-  const rows = await admin.query(
+  const res = await admin.query(
     `SELECT 1 FROM pg_database WHERE datname = $1`,
     [database]
   );
-  if (rows.rows.length === 0) {
+  if (res.rows.length === 0) {
     await admin.query(`CREATE DATABASE "${database}"`);
     console.log(`Created database ${database}`);
   }
@@ -51,7 +50,7 @@ async function setupTables(client: Client) {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email VARCHAR(50) NOT NULL UNIQUE,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `
   );
@@ -64,10 +63,10 @@ async function setupTables(client: Client) {
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         description TEXT,
-        userId INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        userid INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         status VARCHAR(20) DEFAULT 'pending',
-        dueDate TIMESTAMP,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        duedate TIMESTAMP,
+        createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
         CONSTRAINT chk_status CHECK (status IN ('pending', 'in_progress', 'completed'))
       );
@@ -85,10 +84,11 @@ async function setupTables(client: Client) {
 export const getClient = async () => {
   await setupDatabase();
 
-  const client = await connect({
+  const client = new Client({
     ...connectionConfig,
     database,
   });
+  await client.connect();
 
   console.log(`Connected to database ${database}`);
 

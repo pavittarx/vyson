@@ -1,4 +1,4 @@
-import type { Client } from "ts-postgres";
+import { Client } from "pg";
 
 type User = {
   id: number;
@@ -25,12 +25,10 @@ export class DatabaseManager {
   async getCount(tableName: string) {
     const count_query = `SELECT count(*)::int FROM ${tableName};`;
     const count_result = await this.client.query(count_query);
-
-    for await (const row of count_result) {
-      return row.count;
+    if (count_result.rows.length > 0) {
+      return count_result.rows[0].count;
     }
-
-    return -1;
+    return 0;
   }
 
   async createUser({ name, email }: CreateUser) {
@@ -40,8 +38,6 @@ export class DatabaseManager {
     `,
       [email]
     );
-
-    console.log("Exists", exists.rows);
 
     if (exists.rows.length > 0) {
       console.log("User already exists with email:", email);
@@ -59,7 +55,7 @@ export class DatabaseManager {
   async createTodo({ title, userId, createdAt, dueDate }: CreateTodo) {
     await this.client.query(
       `
-      INSERT INTO todos(title, userId, createdAt, dueDate) VALUES($1, $2, $3, $4);
+      INSERT INTO todos(title, userid, createdat, duedate) VALUES($1, $2, $3, $4);
     `,
       [title, userId, createdAt, dueDate]
     );
@@ -71,23 +67,35 @@ export class DatabaseManager {
       .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
       .join(", ");
     const values = users.flatMap((u) => [u.name, u.email]);
-    return await this.client.query(
+    const result = await this.client.query(
       `INSERT INTO users(name, email) 
         VALUES ${valuesPlaceholder} 
         ON CONFLICT (email) DO NOTHING
         RETURNING id;`,
       values
     );
+    return result.rows;
   }
 
   async createTodosBulk(todos: CreateTodo[]) {
     if (todos.length === 0) return;
 
-    for (const todo of todos) {
-      await this.client.query(
-        `INSERT INTO todos(title, userid, status, createdat, duedate) VALUES ($1, $2, $3, $4, $5)`,
-        [todo.title, todo.userId, todo.status, todo.createdAt, todo.dueDate]
-      );
-    }
+    const fields = ["title", "userId", "status", "createdAt", "dueDate"];
+
+    const valuesPlaceholder = todos
+      .map(
+        (_, i) =>
+          `(${fields
+            .map((_, j) => `$${i * fields.length + j + 1}`)
+            .join(", ")})`
+      )
+      .join(", ");
+
+    const values = todos.flatMap((todo) => fields.map((f) => (todo as any)[f]));
+
+    await this.client.query(
+      `INSERT INTO todos(${fields.join(", ")}) VALUES ${valuesPlaceholder};`,
+      values
+    );
   }
 }
