@@ -81,14 +81,20 @@ export function generateTodos(count: number, userIds: number[]) {
   const todos = [];
   for (let i = 0; i < count; i++) {
     const userId = userIds[Math.floor(Math.random() * userIds.length)];
-    const created_at = randomDateInPastSixMonths();
-    const due_date = randomDueDate(created_at);
+    const createdAt = randomDateInPastSixMonths();
+    const dueDate = randomDueDate(createdAt);
+    const status = randomStatus();
+
+    if (!userId || !createdAt || !dueDate || !status) {
+      throw new Error("Invalid data generated for todo");
+    }
+
     todos.push({
       title: `Todo #${i + 1}`,
-      userId,
-      status: randomStatus(),
-      created_at: created_at.toISOString(),
-      due_date: due_date.toISOString(),
+      userId: userId,
+      status: status,
+      createdAt: createdAt,
+      dueDate: dueDate,
     });
   }
   return todos;

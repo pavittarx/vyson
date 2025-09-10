@@ -51,7 +51,7 @@ async function setupTables(client: Client) {
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email VARCHAR(50) NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `
   );
@@ -67,7 +67,7 @@ async function setupTables(client: Client) {
         userId INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         status VARCHAR(20) DEFAULT 'pending',
         dueDate TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
         CONSTRAINT chk_status CHECK (status IN ('pending', 'in_progress', 'completed'))
       );

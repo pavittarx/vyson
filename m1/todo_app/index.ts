@@ -1,12 +1,13 @@
 import { generateTodos, generateUsers } from "./generator.js";
 import { getClient } from "./init.js";
 import { DatabaseManager } from "./database.js";
+import { pg } from "squid";
 
 await using client = await getClient();
 const db = new DatabaseManager(client);
 
 async function main(){
-  const totalInserts = 100000000;
+  const totalInserts = 1000;
   const stepSize = 500;
   const start = performance.now();
 
@@ -23,10 +24,9 @@ async function main(){
     for(let row of result){
       userIds.push(row.id);
     }
+
     const todos = generateTodos(stepSize*10, userIds);
     await db.createTodosBulk(todos);
-
-    console.log(`Inserted ${(i + stepSize)} records so far...`);
   }
 
   console.log(`Total Time for ${totalInserts} insertions:`, performance.now() - start);

@@ -11,8 +11,8 @@ type Todo = {
   title: string;
   userId: number;
   status?: "pending" | "in_progress" | "completed";
-  created_at?: string;
-  due_date?: string;
+  createdAt?: string;
+  dueDate?: string;
 };
 
 type CreateTodo = Omit<Todo, "id">;
@@ -56,12 +56,12 @@ export class DatabaseManager {
     );
   }
 
-  async createTodo({ title, userId }: CreateTodo) {
+  async createTodo({ title, userId, createdAt, dueDate }: CreateTodo) {
     await this.client.query(
       `
-      INSERT INTO todos(title, userId) VALUES($1, $2);
+      INSERT INTO todos(title, userId, createdAt, dueDate) VALUES($1, $2, $3, $4);
     `,
-      [title, userId]
+      [title, userId, createdAt, dueDate]
     );
   }
 
@@ -82,23 +82,12 @@ export class DatabaseManager {
 
   async createTodosBulk(todos: CreateTodo[]) {
     if (todos.length === 0) return;
-    // Support optional status, created_at, due_date fields
-    const fields = ["title", "userId", "status", "created_at", "dueDate"];
 
-    const valuesPlaceholder = todos
-      .map(
-        (_, i) =>
-          `(${fields
-            .map((_, j) => `$${i * fields.length + j + 1}`)
-            .join(", ")})`
-      )
-      .join(", ");
-
-    const values = todos.flatMap((todo) => fields.map((f) => (todo as any)[f]));
-
-    await this.client.query(
-      `INSERT INTO todos(${fields.join(", ")}) VALUES ${valuesPlaceholder};`,
-      values
-    );
+    for (const todo of todos) {
+      await this.client.query(
+        `INSERT INTO todos(title, userid, status, createdat, duedate) VALUES ($1, $2, $3, $4, $5)`,
+        [todo.title, todo.userId, todo.status, todo.createdAt, todo.dueDate]
+      );
+    }
   }
 }
