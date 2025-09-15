@@ -13,6 +13,7 @@ type Todo = {
   status?: "pending" | "in_progress" | "completed";
   createdAt?: string;
   dueDate?: string;
+  priority?: number;
 };
 
 type CreateTodo = Omit<Todo, "id">;
@@ -80,7 +81,14 @@ export class DatabaseManager {
   async createTodosBulk(todos: CreateTodo[]) {
     if (todos.length === 0) return;
 
-    const fields = ["title", "userId", "status", "createdAt", "dueDate"];
+    const fields = [
+      "title",
+      "userId",
+      "status",
+      "createdAt",
+      "dueDate",
+      "priority",
+    ];
 
     const valuesPlaceholder = todos
       .map(
@@ -90,6 +98,8 @@ export class DatabaseManager {
             .join(", ")})`
       )
       .join(", ");
+
+    console.log("Fields:", todos);
 
     const values = todos.flatMap((todo) => fields.map((f) => (todo as any)[f]));
 

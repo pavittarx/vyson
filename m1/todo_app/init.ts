@@ -67,6 +67,7 @@ async function setupTables(client: Client) {
         status VARCHAR(20) DEFAULT 'pending',
         duedate TIMESTAMP,
         createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        priority INTEGER DEFAULT 0,
 
         CONSTRAINT chk_status CHECK (status IN ('pending', 'in_progress', 'completed'))
       );

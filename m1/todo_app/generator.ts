@@ -77,6 +77,10 @@ export function generateUsers(count: number) {
   return users;
 }
 
+function generatePriority() {
+  return Math.floor(Math.random() * 4);
+}
+
 export function generateTodos(count: number, userIds: number[]) {
   const todos = [];
   for (let i = 0; i < count; i++) {
@@ -84,6 +88,7 @@ export function generateTodos(count: number, userIds: number[]) {
     const createdAt = randomDateInPastSixMonths();
     const dueDate = randomDueDate(createdAt);
     const status = randomStatus();
+    const priority = generatePriority();
 
     if (!userId || !createdAt || !dueDate || !status) {
       throw new Error("Invalid data generated for todo");
@@ -95,6 +100,7 @@ export function generateTodos(count: number, userIds: number[]) {
       status: status,
       createdAt: createdAt.toISOString(),
       dueDate: dueDate.toISOString(),
+      priority: priority,
     });
   }
   return todos;
